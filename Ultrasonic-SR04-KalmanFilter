@@ -1,0 +1,64 @@
+
+#define echoPin 2
+#define trigPin 3
+
+// defines variables
+long duration; // variable for the duration of sound wave travel
+float distance; // variable for the distance measurement
+
+// kalman variables
+float R = 2.92E-03;  // measuement variance; determined using excel and reading samples of raw sensor data which is constant
+float Q = 1e-3;  //arbitaryly determined for this case. -5,-7(not working),-3
+float Pc = 0.0;
+float G = 0.0;
+float P = 1.0;
+float Xp = 0.0;
+float Zp = 0.0;
+float Xe = 0.0;
+
+void setup() {
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an OUTPUT
+  pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
+  Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
+  Serial.println("Ultrasonic Sensor HC-SR04 Test"); // print some text in Serial Monitor
+  Serial.println("with Arduino UNO R3");
+}
+void loop() {
+  // Clears the trigPin condition
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+  // Displays the distance on the Serial Monitor
+  //Serial.print("Distance: ");
+  Serial.print(distance);
+
+
+
+
+
+  // kalman process
+  Pc = P + Q;       //Predict covariance
+  Xp = Xe;
+  
+  G = Pc/(Pc + R);    // kalman gain
+  
+  
+                    //
+  Zp = Xp;
+  Xe = G*(distance-Zp)+Xp;   // the kalman State estimate of the sensor voltage
+  P = (1-G)*Pc;             //update covarience  
+
+  
+  
+  
+  Serial.print(",");
+  Serial.println(Xe);         //printing new state
+  delay(20);
+}
